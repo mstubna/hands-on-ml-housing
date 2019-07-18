@@ -12,5 +12,6 @@ This repo contains scripts for working through the examples in Chapter 2 of the 
 ## Project setup
 
 1. Clone the repo
-2. `conda env create --file environment.yml`
+2. From a terminal shell, run `conda env create --file environment.yml`, then `conda activate hands-on-ml-housing`
 3. Create a `data` folder and download [the housing data file](https://raw.githubusercontent.com/ageron/handson-ml/master/datasets/housing/housing.tbz) and extract it to the `data` folder.
+4. You should now be able to run the scripts.
