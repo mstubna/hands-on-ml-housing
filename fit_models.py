@@ -7,11 +7,13 @@ from sklearn.impute import SimpleImputer
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
-from sklearn.model_selection import StratifiedShuffleSplit, cross_val_score, GridSearchCV
+from sklearn.model_selection import StratifiedShuffleSplit, cross_val_score, GridSearchCV, RandomizedSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from scipy.stats import expon, reciprocal
 from sklearn.svm import SVR
 
+n_jobs = 16
 rooms_index, bedrooms_index, population_index, households_index = 3, 4, 5, 6
 
 ## Combines existing attributes into new attributes
@@ -100,7 +102,8 @@ lin_scores = cross_val_score(
   housing_prepared,
   housing_labels,
   scoring='neg_mean_squared_error',
-  cv=10
+  cv=10,
+  n_jobs=n_jobs
 )
 lin_rmse_scores = np.sqrt(-lin_scores)
 print('Linear Regression:\n')
@@ -112,14 +115,15 @@ print('\n\n')
 param_grid = [
   { 'n_estimators': [3, 10, 30, 100, 150, 200], 'max_features': [2, 4, 6, 8] }
 ]
-forest_reg = RandomForestRegressor()
+forest_reg = RandomForestRegressor(random_state=42)
 grid_search = GridSearchCV(
   estimator=forest_reg,
   param_grid=param_grid,
   cv=5,
   scoring='neg_mean_squared_error',
   return_train_score=True,
-  n_jobs=16
+  verbose=2,
+  n_jobs=n_jobs
 )
 grid_search.fit(housing_prepared, housing_labels)
 forest_reg = grid_search.best_estimator_
@@ -130,7 +134,7 @@ forest_scores = cross_val_score(
   housing_labels,
   scoring='neg_mean_squared_error',
   cv=10,
-  n_jobs=16
+  n_jobs=n_jobs
 )
 forest_rmse_scores = np.sqrt(-forest_scores)
 print('Random Forest:\n')
@@ -140,20 +144,24 @@ display_features(forest_reg.feature_importances_)
 print('\n\n')
 
 # Support Vector Regressor
-param_grid = [
-  { 'kernel': ['linear'], 'C': [0.5, 1.0, 1.5, 10, 20, 30, 50, 100], 'gamma': ['auto'] }
-]
+param_distributions = {
+  'kernel': ['linear', 'rbf'],
+  'C': reciprocal(20, 200000),
+  'gamma': expon(scale=1.0)
+}
 sv_reg = SVR()
-grid_search = GridSearchCV(
+rnd_search = RandomizedSearchCV(
   estimator=sv_reg,
-  param_grid=param_grid,
+  param_distributions=param_distributions,
   cv=5,
   scoring='neg_mean_squared_error',
   return_train_score=True,
-  n_jobs=16
+  n_iter=50,
+  verbose=2,
+  n_jobs=n_jobs
 )
-grid_search.fit(housing_prepared, housing_labels)
-sv_reg = grid_search.best_estimator_
+rnd_search.fit(housing_prepared, housing_labels)
+sv_reg = rnd_search.best_estimator_
 housing_predictions = sv_reg.predict(housing_prepared)
 sv_scores = cross_val_score(
   sv_reg,
@@ -161,11 +169,11 @@ sv_scores = cross_val_score(
   housing_labels,
   scoring='neg_mean_squared_error',
   cv=10,
-  n_jobs=16
+  n_jobs=n_jobs
 )
 sv_rmse_scores = np.sqrt(-sv_scores)
 print('SV Regression:\n')
-print('Best params: ', grid_search.best_params_)
+print('Best params: ', rnd_search.best_params_)
 display_scores(sv_rmse_scores)
-display_features(sv_reg.coef_[0] / housing_labels.mean())
+# display_features(sv_reg.coef_[0] / housing_labels.mean()) # only works for linear kernel
 print('\n\n')
