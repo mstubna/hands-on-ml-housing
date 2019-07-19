@@ -57,7 +57,7 @@ dependencies:
   - nbconvert=5.5.0=py_0
   - nbformat=4.4.0=py37_0
   - ncurses=6.1=h0a44026_1
-  - notebook=5.7.8=py37_0
+  - notebook=6.0.0=py37_0
   - numpy=1.16.4=py37hacdab7b_0
   - numpy-base=1.16.4=py37h6575580_0
   - openssl=1.1.1c=h1de35cc_1
