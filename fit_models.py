@@ -13,7 +13,7 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from scipy.stats import expon, reciprocal
 from sklearn.svm import SVR
 
-n_jobs = 16
+n_jobs = -1
 rooms_index, bedrooms_index, population_index, households_index = 3, 4, 5, 6
 
 ## Combines existing attributes into new attributes
